@@ -1,9 +1,23 @@
 import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
+import json
+import os
 
-# Dummy database for login credentials (replace with actual database integration)
-USER_CREDENTIALS = {}
+# Path for credentials file
+CREDENTIALS_FILE = "user_credentials.json"
+
+# Load user credentials from file
+if os.path.exists(CREDENTIALS_FILE):
+    with open(CREDENTIALS_FILE, "r") as file:
+        USER_CREDENTIALS = json.load(file)
+else:
+    USER_CREDENTIALS = {}
+
+# Function to save credentials to file
+def save_credentials():
+    with open(CREDENTIALS_FILE, "w") as file:
+        json.dump(USER_CREDENTIALS, file)
 
 # Function to handle login
 def login():
@@ -14,7 +28,7 @@ def login():
         messagebox.showinfo("Login Successful", f"Welcome, {username}!")
         open_homepage()
     else:
-        messagebox.showerror("Login Failed", "dispression mai hai kya")
+        messagebox.showerror("Login Failed", "Invalid username or password")
 
 # Function to handle sign-up
 def signup():
@@ -25,10 +39,11 @@ def signup():
         messagebox.showerror("Sign-Up Failed", "Username already exists")
     elif username and password:
         USER_CREDENTIALS[username] = password
+        save_credentials()
         messagebox.showinfo("Sign-Up Successful", "Account created successfully! Redirecting to homepage.")
         open_homepage()
     else:
-        messagebox.showerror("Sign-Up Failed", "Pahele sign up kar bhadwe")
+        messagebox.showerror("Sign-Up Failed", "Please enter a valid username and password")
 
 # Function to handle forgot password
 def forgot_password():
@@ -38,6 +53,7 @@ def forgot_password():
 
         if username in USER_CREDENTIALS:
             USER_CREDENTIALS[username] = new_password
+            save_credentials()
             messagebox.showinfo("Password Reset", "Password changed successfully")
             forgot_window.destroy()
         else:
@@ -76,6 +92,11 @@ def open_homepage():
     homepage.configure(bg="#34495E")
 
     tk.Label(homepage, text="Welcome to the Homepage!", font=("Helvetica", 18), bg="#34495E", fg="white").pack(pady=20)
+
+# Save credentials before exiting the app
+def on_closing():
+    save_credentials()
+    app.destroy()
 
 # Initialize the main application window
 app = tk.Tk()
@@ -128,6 +149,9 @@ forgot_button.pack(pady=5)
 # Add rounded corners
 for widget in [login_button, signup_button, forgot_button, show_password_button]:
     widget.config(highlightbackground="white", highlightcolor="white", highlightthickness=2, padx=10, pady=5)
+
+# Override the close button to save data
+app.protocol("WM_DELETE_WINDOW", on_closing)
 
 # Run the application
 app.mainloop()
