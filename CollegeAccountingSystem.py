@@ -84,7 +84,7 @@ app.geometry("600x500")
 
 # Load and set background image
 bg_image = Image.open(r"C:\Users\bondg\Downloads\2024-red-dead-redemption-2-minimal-game-4k-3840x2160_1703815995.jpg")  # Replace with your background image path
-bg_image = bg_image.resize((600, 500), Image.LANCZOS)
+bg_image = bg_image.resize((1920, 1080), Image.LANCZOS)
 bg_photo = ImageTk.PhotoImage(bg_image)
 background_label = tk.Label(app, image=bg_photo)
 background_label.place(relwidth=1, relheight=1)
