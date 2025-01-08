@@ -3,6 +3,11 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 import json
 import os
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import qrcode
+from io import BytesIO
+from tkinter import ttk
 
 # Path for credentials file
 CREDENTIALS_FILE = "user_credentials.json"
@@ -13,6 +18,13 @@ if os.path.exists(CREDENTIALS_FILE):
         USER_CREDENTIALS = json.load(file)
 else:
     USER_CREDENTIALS = {}
+
+# Example student fees data
+STUDENT_FEES = {
+    "John Doe": 70000 - 45000,
+    "Jane Smith": 70000 - 30000,
+    "Alice Johnson": 70000 - 70000,
+}
 
 # Function to save credentials to file
 def save_credentials():
@@ -84,14 +96,71 @@ def toggle_password():
         password_entry.config(show='*')
         show_password_button.config(text="Show Password")
 
+# Function to generate a QR code
+def generate_qr_code(data):
+    qr = qrcode.QRCode(box_size=10, border=5)
+    qr.add_data(data)
+    qr.make(fit=True)
+    img = qr.make_image(fill="black", back_color="white")
+    return ImageTk.PhotoImage(img)
+
+# Function to generate a Google Pay UPI QR code
+def generate_google_pay_qr():
+    # Replace this with your actual Google Pay UPI link
+    google_pay_upi_link = "upi://pay?pa=bondgun12@oksbi&pn=Kaustubh&mc=0000&tid=00000000&tr=00000000&tn=PaymentDescription&am=100.00&cu=INR&url=yoururl.com"
+    qr_code_image = generate_qr_code(google_pay_upi_link)  # Use the function to generate the QR
+    return qr_code_image
+
+# Function to search for student fees
+def search_student_fees():
+    student_name = search_entry.get()
+    if student_name in STUDENT_FEES:
+        balance = STUDENT_FEES[student_name]
+        search_result_label.config(text=f"Balance Fees: ₹{balance}")
+    else:
+        search_result_label.config(text="Student not found")
+
 # Function to open the homepage
 def open_homepage():
     homepage = tk.Toplevel(app)
     homepage.title("Homepage")
-    homepage.geometry("600x400")
+    homepage.geometry("900x600")
     homepage.configure(bg="#34495E")
 
-    tk.Label(homepage, text="Welcome to the Homepage!", font=("Helvetica", 18), bg="#34495E", fg="white").pack(pady=20)
+    tk.Label(homepage, text="Welcome to the Homepage!", font=("Helvetica", 18), bg="#34495E", fg="white").pack(pady=10)
+
+    # Widget 1: Google Pay QR Code
+    tk.Label(homepage, text="Scan to Pay via Google Pay", font=("Arial", 14), bg="#34495E", fg="white").pack(pady=5)
+    google_pay_qr_image = generate_google_pay_qr()  # Generate Google Pay QR Code
+    google_pay_qr_label = tk.Label(homepage, image=google_pay_qr_image, bg="#34495E")
+    google_pay_qr_label.image = google_pay_qr_image  # Keep a reference to the image
+    google_pay_qr_label.pack(pady=10)
+
+    # Widget 2: Expenses Graph
+    tk.Label(homepage, text="College Expenses", font=("Arial", 14), bg="#34495E", fg="white").pack(pady=10)
+    fig, ax = plt.subplots(figsize=(5, 3))
+    categories = ["Library", "Hostel", "Mess", "Sports"]
+    expenses = [20000, 30000, 25000, 15000]
+    ax.bar(categories, expenses, color="#2980B9")
+    ax.set_title("Expenses")
+    ax.set_ylabel("Amount (₹)")
+    canvas = FigureCanvasTkAgg(fig, homepage)
+    canvas.get_tk_widget().pack(pady=10)
+
+    # Widget 3: Search Student Fees
+    tk.Label(homepage, text="Check Student Fees", font=("Arial", 14), bg="#34495E", fg="white").pack(pady=10)
+    search_frame = tk.Frame(homepage, bg="#34495E")
+    search_frame.pack(pady=5)
+
+    tk.Label(search_frame, text="Student Name:", font=("Arial", 12), bg="#34495E", fg="white").grid(row=0, column=0, padx=5)
+    search_entry = tk.Entry(search_frame, font=("Arial", 12))
+    search_entry.grid(row=0, column=1, padx=5)
+    search_button = tk.Button(search_frame, text="Search", font=("Arial", 12), bg="#2980B9", fg="white", command=search_student_fees)
+    search_button.grid(row=0, column=2, padx=5)
+
+    global search_result_label
+    search_result_label = tk.Label(homepage, text="", font=("Arial", 12), bg="#34495E", fg="white")
+    search_result_label.pack(pady=5)
 
 # Save credentials before exiting the app
 def on_closing():
@@ -135,22 +204,21 @@ show_password_button = tk.Button(login_frame, text="Show Password", font=("Arial
 show_password_button.pack(pady=5)
 
 # Styled Buttons
-style = {"font": ("Arial", 12), "bg": "#2980B9", "fg": "white", "relief": "flat", "bd": 0}
+style = {"font": ("Arial", 12), "bg": "#2980B9", "fg": "white", "relief": "flat", "width": 15}
 
+# Login button
 login_button = tk.Button(login_frame, text="Login", **style, command=login)
-login_button.pack(pady=5)
+login_button.pack(pady=10)
 
+# Sign-Up button
 signup_button = tk.Button(login_frame, text="Sign Up", **style, command=signup)
 signup_button.pack(pady=5)
 
-forgot_button = tk.Button(login_frame, text="Forgot Password", **style, command=forgot_password)
-forgot_button.pack(pady=5)
+# Forgot Password button
+forgot_password_button = tk.Button(login_frame, text="Forgot Password?", font=("Arial", 10), bg="#34495E", fg="white", relief="flat", command=forgot_password)
+forgot_password_button.pack(pady=5)
 
-# Add rounded corners
-for widget in [login_button, signup_button, forgot_button, show_password_button]:
-    widget.config(highlightbackground="white", highlightcolor="white", highlightthickness=2, padx=10, pady=5)
-
-# Override the close button to save data
+# Handle app close
 app.protocol("WM_DELETE_WINDOW", on_closing)
 
 # Run the application
